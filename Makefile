@@ -35,7 +35,7 @@ compileobjs: $(OBJS)
 HEADERS = \
     SoundManager.h \
     image.hpp \
-    Game.h 
+    Game.h
 
 lib_tutorial: $(HEADERS) $(OBJS) Makefile
 	ar rvs libsm $(OBJS)

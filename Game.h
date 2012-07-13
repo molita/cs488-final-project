@@ -18,10 +18,15 @@ class Game {
     Game();		// Constructor
 		~Game();	// Destructor
 
+	double getHeight(double x, double y);
+
 	private:
 		// Generates a world using a heightmap
 		// Takes in a .png file which will be read in as a heightmap
+		double heightData[128][128];
+
 		void GenerateWorld(std::string file);
+		void drawWorldMeshVertex(double x, double y, double z);
 
 };
 
