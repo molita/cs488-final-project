@@ -115,7 +115,7 @@ void render(){
 
 		//glTranslatef(0, 0, -128);		
 
-		glScalef(5, 5, 5);
+		//glScalef(5, 5, 5);
 		glCallList(2);
 }
 
@@ -144,9 +144,9 @@ void updatePlayerDirection()
 	cameraDirectionY = view[6];
 	cameraDirectionZ = view[9];
 	
-	std::cerr << "CURRENT PLAYER LOCATION (" << playerPosX << "," << playerPosZ << ")" << std::endl;
+	//std::cerr << "CURRENT PLAYER LOCATION (" << playerPosX << "," << playerPosY << "," << playerPosZ << ")" << std::endl;
 
-	//playerPosY = game.getHeight(playerPosX, playerPosZ);
+	
 }
 
 //-------------------------------------------------------------------
@@ -282,6 +282,7 @@ void keyboard(unsigned char k, int x, int y)
 			// So must change this later
 			playerPosX = playerPosX + (cameraDirectionX * 5);
 			playerPosZ = playerPosZ + (cameraDirectionZ * 5);
+			playerPosY = (12 * game.getHeight(playerPosX, playerPosZ)) + 1;
 			break;
 		case 's':
 			//playerPosZ = playerPosZ + 5;

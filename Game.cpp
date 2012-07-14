@@ -23,10 +23,10 @@ double Game::getHeight(double x, double y)
 		tempX = 0;
 	if (tempX > 127)
 		tempX = 127;
-	if (tempY < 0)
+	if (tempY < -127)
 		tempY = 0;
-	if (tempY > 127)
-		tempY	= 127;
+	if (tempY > 0)
+		tempY = 0;
 
 	return heightData[tempX][-tempY];
 
