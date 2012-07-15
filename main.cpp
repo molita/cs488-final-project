@@ -14,12 +14,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
-
+#include <cmath>
 
 #include "SoundManager.h"
 
-#include "Game.h"
-
+#include "Game.hpp"
+#include "glm/glm.h"
+#include "glm/glmint.h"
 
 #ifdef WIN32
 #include <windows.h>
@@ -57,6 +58,7 @@ float xpos = 0, ypos = 0;
 
 int music_on = 0;
 
+
 // Camera Variables
 double cameraPosX, cameraPosY, cameraPosZ;
 double cameraLookAtX, cameraLookAtY, cameraLookAtZ;		// May not be needed anymore
@@ -65,11 +67,14 @@ double cameraDirectionX, cameraDirectionY, cameraDirectionZ;
 
 // Player Variables
 double playerPosX, playerPosY, playerPosZ;
-double playerDirectionX, playerDirectionY, playerDirectionZ;
+double playerDirection;
 
 int prevDifference;
 
 Game game;
+
+// Test Model
+GLMmodel* model;
 
 //--------------------------------------------------------------------
 //  State variables
@@ -117,6 +122,16 @@ void render(){
 
 		//glScalef(5, 5, 5);
 		glCallList(2);
+
+		glColor3f(1, 0, 0);
+		
+		glPushMatrix();
+		glLoadIdentity();
+		glTranslated(playerPosX, playerPosY, playerPosZ);
+		glRotated(playerDirection, 0, 1, 0);
+		glmDraw(model, GLM_SMOOTH);
+	
+		glPopMatrix();
 }
 
 // Function to calculate the amount to rotate based on mouse movement
@@ -223,13 +238,21 @@ void display(void)
 	glLoadIdentity();
 	glViewport(0, 0, scrWidth, scrHeight);
 	gluPerspective(40.0, (GLfloat)scrWidth/(GLfloat)scrHeight, 0.1, 1000.0);
-
+/*
+	gluLookAt(
+		-playerPosX + (cameraDirectionX*5), -playerPosY - 5, -playerPosZ + (cameraDirectionZ*5),
+		-playerPosX, -playerPosY, -playerPosZ,
+		0, 1, 0);
+*/
 	// Camera Rotation
 	glRotated(cameraAngleX / 10, 1, 0, 0);
 	glRotated(cameraAngleY / 10, 0, 1, 0);
 	glRotated(cameraAngleZ / 10, 0, 0, 1);
 
-	glTranslated(-playerPosX, -playerPosY, -playerPosZ);
+	
+
+	// Camera Translation
+	glTranslated(-playerPosX + 5, -playerPosY, -playerPosZ + 5);
 
 
 	/* change to model view for drawing
@@ -272,17 +295,22 @@ void keyboard(unsigned char k, int x, int y)
 		case 'a':
 			//playerPosX = playerPosX - 5;
 			// Rotate the tank left
+			playerDirection = playerDirection + 0.8;
 			break;
 		case 'd':
 			//playerPosX = playerPosX + 5;
 			// Rotate the tank right
+			playerDirection = playerDirection - 0.8;
 			break;
 		case 'w':
 			// We're only moving the tank forward, not the camera
 			// So must change this later
-			playerPosX = playerPosX + (cameraDirectionX * 5);
-			playerPosZ = playerPosZ + (cameraDirectionZ * 5);
-			playerPosY = (12 * game.getHeight(playerPosX, playerPosZ)) + 1;
+			//playerPosX = playerPosX + (cameraDirectionZ * 5);
+			//playerPosZ = playerPosZ + (cameraDirectionZ * 5);
+			playerPosX = playerPosX + sin(playerDirection)*5;
+			playerPosZ = playerPosZ + cos(playerDirection)*5;			
+			// Update the Y value based on height data
+				playerPosY = (12 * game.getHeight(playerPosX, playerPosZ)) + 1;
 			break;
 		case 's':
 			//playerPosZ = playerPosZ + 5;
@@ -327,7 +355,14 @@ void init(int argc, char** argv)
 	// Hide the mouse
 	glutSetCursor(GLUT_CURSOR_NONE);
 
+	model = glmReadOBJ("models/TankTurret2.obj");
+	glmScale(model, 0.02);
+	glmVertexNormals(model, 180.0, false);
+
+	// Instantiate the game
 	game = Game();
+
+	
 
 }
 
@@ -352,6 +387,7 @@ void reshape(int w, int h)
   }
 
 // Entry
+// Is called when the cursor enters or leaves the window
 void entry(int state)
 {	
 	// Warp the pointer to the middle of the screen when it leaves window
@@ -418,6 +454,8 @@ int main(int argc, char** argv){
 		playerPosX = 0;
 		playerPosY = 10;
 		playerPosZ = 0;
+
+		playerDirection = 0;
 
     // initialize callback
     glutDisplayFunc(display);
