@@ -63,11 +63,12 @@ int music_on = 0;
 double cameraPosX, cameraPosY, cameraPosZ;
 double cameraLookAtX, cameraLookAtY, cameraLookAtZ;		// May not be needed anymore
 double cameraAngleX, cameraAngleY, cameraAngleZ;
-double cameraDirectionX, cameraDirectionY, cameraDirectionZ;
+
 
 // Player Variables
 double playerPosX, playerPosY, playerPosZ;
-double playerDirection;
+double tankDirection;
+double turretDirection;
 
 int prevDifference;
 
@@ -121,17 +122,15 @@ void render(){
 		//glTranslatef(0, 0, -128);		
 
 		//glScalef(5, 5, 5);
+
+		// Turret
 		glCallList(2);
 
 		glColor3f(1, 0, 0);
-
 		glPushMatrix();
 		glLoadIdentity();
 		glTranslated(playerPosX, playerPosY, playerPosZ);
-		//glTranslated(playerPosX + 5, playerPosY, playerPosZ);
-		glRotated(playerDirection - 90, 0, 1, 0);
-		//glTranslated(playerPosX - 5, playerPosY, playerPosZ);
-
+		glRotated(turretDirection - 90, 0, 1, 0);
 		glmDraw(model, GLM_SMOOTH);
 	
 		glPopMatrix();
@@ -151,7 +150,7 @@ float cameraRotateMotion(float current, float previous)
 
 	return difference * 0.5;
 }
-
+/*
 void updatePlayerDirection()
 {
 	GLfloat view[16];
@@ -166,7 +165,7 @@ void updatePlayerDirection()
 
 	
 }
-
+*/
 //-------------------------------------------------------------------
 // motion 
 //-------------------------------------------------------------------
@@ -195,15 +194,15 @@ void passiveMotion(int x, int y){
 
 	// Looking Right
 	if (prev_x < cur_x)
-			playerDirection = playerDirection - cameraRotateMotion(cur_x, prev_x);
+			turretDirection = turretDirection - cameraRotateMotion(cur_x, prev_x);
 	// Looking Left
 	if (prev_x > cur_x)
-			playerDirection = playerDirection + cameraRotateMotion(cur_x, prev_x);
+			turretDirection = turretDirection + cameraRotateMotion(cur_x, prev_x);
 
   prev_x = cur_x;
   prev_y = cur_y;
 
-	updatePlayerDirection();
+	//updatePlayerDirection();
 
   glutPostRedisplay();
 
@@ -261,17 +260,16 @@ void display(void)
 	glRotated(20, 1, 0, 0);
 
 	// Make camera rotate with turret direction
-	glRotated(-playerDirection, 0, 1, 0);
+	glRotated(-turretDirection, 0, 1, 0);
 
 	
 
 	// Camera Translation
 	glTranslated(
-		-playerPosX + 20*(cos((playerDirection - 90)*(M_PI/180))*cos(180*(M_PI/180))), 
+		-playerPosX + 20*(cos((turretDirection - 90)*(M_PI/180))*cos(180*(M_PI/180))), 
 		-playerPosY - 7, 
-		-playerPosZ - 20*(sin((playerDirection - 90)*(M_PI/180))*cos(180*(M_PI/180))));
-	
-	//glRotated((playerDirection-90)*(M_PI/180), 0, 1, 0);
+		-playerPosZ - 20*(sin((turretDirection - 90)*(M_PI/180))*cos(180*(M_PI/180))));
+
 	/* change to model view for drawing
      */
 	glMatrixMode(GL_MODELVIEW);
@@ -312,12 +310,12 @@ void keyboard(unsigned char k, int x, int y)
 		case 'a':
 			//playerPosX = playerPosX - 5;
 			// Rotate the tank left
-			//playerDirection = playerDirection + 1.0;
+			tankDirection = tankDirection + 1.0;
 			break;
 		case 'd':
 			//playerPosX = playerPosX + 5;
 			// Rotate the tank right
-			//playerDirection = playerDirection - 1.0;
+			tankDirection = tankDirection - 1.0;
 
 			//std::cerr << "Direction: " << playerDirection << std::endl;
 
@@ -327,16 +325,16 @@ void keyboard(unsigned char k, int x, int y)
 			// So must change this later
 			//playerPosX = playerPosX + (cameraDirectionX * 5);
 			//playerPosZ = playerPosZ + (cameraDirectionZ * 5);
-			playerPosX = playerPosX - sin(playerDirection*(M_PI/180))*1;
-			playerPosZ = playerPosZ - cos(playerDirection*(M_PI/180))*1;			
+			playerPosX = playerPosX - sin(tankDirection*(M_PI/180))*1;
+			playerPosZ = playerPosZ - cos(tankDirection*(M_PI/180))*1;			
 			// Update the Y value based on height data
 			playerPosY = (12 * game.getHeight(playerPosX, playerPosZ)) + 1;
 			break;
 		case 's':
 			//playerPosZ = playerPosZ + 5;
 			// Move the tank backwards
-			playerPosX = playerPosX + sin(playerDirection*(M_PI/180))*1;
-			playerPosZ = playerPosZ + cos(playerDirection*(M_PI/180))*1;			
+			playerPosX = playerPosX + sin(tankDirection*(M_PI/180))*1;
+			playerPosZ = playerPosZ + cos(tankDirection*(M_PI/180))*1;			
 			// Update the Y value based on height data
 			playerPosY = (12 * game.getHeight(playerPosX, playerPosZ)) + 1;
 			break;
@@ -381,7 +379,7 @@ void init(int argc, char** argv)
 	glmScale(model, 0.02);
 	glmVertexNormals(model, 180.0, false);
 
-	// Isin(playerDirection*(M_PI/180))*1nstantiate the game
+	// Instantiate the game
 	game = Game();
 
 	
@@ -477,7 +475,7 @@ int main(int argc, char** argv){
 		playerPosY = 10;
 		playerPosZ = 0;
 
-		playerDirection = 270;
+		turretDirection = 270;
 
     // initialize callback
     glutDisplayFunc(display);
