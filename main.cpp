@@ -176,7 +176,7 @@ void passiveMotion(int x, int y){
 	cur_y = y;
   
 	// Check which direction the mouse is moving
-
+/*
 	// Looking up
 	if (prev_y > cur_y)
 			cameraAngleX = cameraAngleX - cameraRotateMotion(cur_y, prev_y);
@@ -189,6 +189,16 @@ void passiveMotion(int x, int y){
 	// Looking Left
 	if (prev_x > cur_x)
 			cameraAngleY = cameraAngleY - cameraRotateMotion(cur_x, prev_x);
+*/
+
+// For the tank turret
+
+	// Looking Right
+	if (prev_x < cur_x)
+			playerDirection = playerDirection - cameraRotateMotion(cur_x, prev_x);
+	// Looking Left
+	if (prev_x > cur_x)
+			playerDirection = playerDirection + cameraRotateMotion(cur_x, prev_x);
 
   prev_x = cur_x;
   prev_y = cur_y;
@@ -243,17 +253,20 @@ void display(void)
 	gluPerspective(40.0, (GLfloat)scrWidth/(GLfloat)scrHeight, 0.1, 1000.0);
 
 	// Camera Rotation
-	glRotated(cameraAngleX / 10, 1, 0, 0);
-	glRotated(cameraAngleY / 10, 0, 1, 0);
-	glRotated(cameraAngleZ / 10, 0, 0, 1);
+	//glRotated(cameraAngleX / 10, 1, 0, 0);
+	//glRotated(cameraAngleY / 10, 0, 1, 0);
+	//glRotated(cameraAngleZ / 10, 0, 0, 1);
+
+	// Make camera rotate with turret direction
+	glRotated(-playerDirection, 0, 1, 0);
 
 	// Camera Translation
 	glTranslated(
 		-playerPosX + 10*(cos((playerDirection - 90)*(M_PI/180))*cos(180*(M_PI/180))), 
 		-playerPosY - 2, 
 		-playerPosZ - 10*(sin((playerDirection - 90)*(M_PI/180))*cos(180*(M_PI/180))));
-
-
+	
+	//glRotated((playerDirection-90)*(M_PI/180), 0, 1, 0);
 	/* change to model view for drawing
      */
 	glMatrixMode(GL_MODELVIEW);
@@ -294,14 +307,14 @@ void keyboard(unsigned char k, int x, int y)
 		case 'a':
 			//playerPosX = playerPosX - 5;
 			// Rotate the tank left
-			playerDirection = playerDirection + 1.0;
+			//playerDirection = playerDirection + 1.0;
 			break;
 		case 'd':
 			//playerPosX = playerPosX + 5;
 			// Rotate the tank right
-			playerDirection = playerDirection - 1.0;
+			//playerDirection = playerDirection - 1.0;
 
-			std::cerr << "Direction: " << playerDirection << std::endl;
+			//std::cerr << "Direction: " << playerDirection << std::endl;
 
 			break;
 		case 'w':
