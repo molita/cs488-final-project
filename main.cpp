@@ -75,7 +75,8 @@ int prevDifference;
 Game game;
 
 // Test Model
-GLMmodel* model;
+GLMmodel* tankTurret;
+GLMmodel* tankBody;
 
 //--------------------------------------------------------------------
 //  State variables
@@ -116,17 +117,31 @@ void render(){
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glLoadIdentity(); // Reset the view
 
-		// Turret
+		// The world mesh
 		glCallList(2);
 
+		// Body
 		glColor3f(1, 0, 0);
 		glPushMatrix();
 		glLoadIdentity();
 		glTranslated(playerPosX, playerPosY, playerPosZ);
+		glRotated(tankDirection - 90, 0, 1, 0);
+		glmDraw(tankBody, GLM_SMOOTH);
+
+		// Turret
+		glColor3f(1, 0, 0);
+		glPushMatrix();
+		glLoadIdentity();
+		//glTranslated(playerPosX+0.7, playerPosY+0.8, playerPosZ+0.5);
+
+		glTranslated(
+			playerPosX+(0.7*cos(tankDirection*(M_PI/180))), 
+			playerPosY+0.8, 
+			playerPosZ-(0.5*sin(tankDirection*(M_PI/180))));
+
 		glRotated(turretDirection - 90, 0, 1, 0);
-		glmDraw(model, GLM_SMOOTH);
+		glmDraw(tankTurret, GLM_SMOOTH);
 	
-		glPopMatrix();
 }
 
 // Function to calculate the amount to rotate based on mouse movement
@@ -318,9 +333,17 @@ void init(int argc, char** argv)
 	// Hide the mouse
 	glutSetCursor(GLUT_CURSOR_NONE);
 
-	model = glmReadOBJ("models/TankTurret2.obj");
-	glmScale(model, 0.02);
-	glmVertexNormals(model, 180.0, false);
+	// Load the models
+
+	// Tank Turret
+	tankTurret = glmReadOBJ("models/TankTurret2.obj");
+	glmScale(tankTurret, 0.02);
+	glmVertexNormals(tankTurret, 180.0, false);
+
+	// Tank Body
+	tankBody = glmReadOBJ("models/TankBody.obj");
+	glmScale(tankBody, 0.02);
+	glmVertexNormals(tankBody, 180.0, false);
 
 	// Instantiate the game
 	game = Game();
