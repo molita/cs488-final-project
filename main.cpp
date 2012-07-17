@@ -257,14 +257,19 @@ void display(void)
 	//glRotated(cameraAngleY / 10, 0, 1, 0);
 	//glRotated(cameraAngleZ / 10, 0, 0, 1);
 
+	// Give a better viewing angle
+	glRotated(20, 1, 0, 0);
+
 	// Make camera rotate with turret direction
 	glRotated(-playerDirection, 0, 1, 0);
 
+	
+
 	// Camera Translation
 	glTranslated(
-		-playerPosX + 10*(cos((playerDirection - 90)*(M_PI/180))*cos(180*(M_PI/180))), 
-		-playerPosY - 2, 
-		-playerPosZ - 10*(sin((playerDirection - 90)*(M_PI/180))*cos(180*(M_PI/180))));
+		-playerPosX + 20*(cos((playerDirection - 90)*(M_PI/180))*cos(180*(M_PI/180))), 
+		-playerPosY - 7, 
+		-playerPosZ - 20*(sin((playerDirection - 90)*(M_PI/180))*cos(180*(M_PI/180))));
 	
 	//glRotated((playerDirection-90)*(M_PI/180), 0, 1, 0);
 	/* change to model view for drawing
@@ -325,13 +330,15 @@ void keyboard(unsigned char k, int x, int y)
 			playerPosX = playerPosX - sin(playerDirection*(M_PI/180))*1;
 			playerPosZ = playerPosZ - cos(playerDirection*(M_PI/180))*1;			
 			// Update the Y value based on height data
-			//	playerPosY = (12 * game.getHeight(playerPosX, playerPosZ)) + 1;
+			playerPosY = (12 * game.getHeight(playerPosX, playerPosZ)) + 1;
 			break;
 		case 's':
 			//playerPosZ = playerPosZ + 5;
 			// Move the tank backwards
-			//playerPosX = playerPosX + (cameraDirectionX * 5);
-			//playerPosZ = playerPosZ + (cameraDirectionZ * 5);
+			playerPosX = playerPosX + sin(playerDirection*(M_PI/180))*1;
+			playerPosZ = playerPosZ + cos(playerDirection*(M_PI/180))*1;			
+			// Update the Y value based on height data
+			playerPosY = (12 * game.getHeight(playerPosX, playerPosZ)) + 1;
 			break;
     case CALLBACK_QUIT:
       exit(0);
