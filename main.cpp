@@ -132,8 +132,6 @@ void render(){
 		glColor3f(1, 0, 0);
 		glPushMatrix();
 		glLoadIdentity();
-		//glTranslated(playerPosX+0.7, playerPosY+0.8, playerPosZ+0.5);
-
 		glTranslated(
 			playerPosX+(0.7*cos(tankDirection*(M_PI/180))), 
 			playerPosY+0.8, 
