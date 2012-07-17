@@ -116,13 +116,6 @@ void render(){
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glLoadIdentity(); // Reset the view
 
-    // move the scene 
-    //glTranslatef(xpos - 100, ypos - 50, -150);
-
-		//glTranslatef(0, 0, -128);		
-
-		//glScalef(5, 5, 5);
-
 		// Turret
 		glCallList(2);
 
@@ -150,22 +143,7 @@ float cameraRotateMotion(float current, float previous)
 
 	return difference * 0.5;
 }
-/*
-void updatePlayerDirection()
-{
-	GLfloat view[16];
 
-	glGetFloatv(GL_PROJECTION_MATRIX, view);
-
-	cameraDirectionX = view[2];
-	cameraDirectionY = view[6];
-	cameraDirectionZ = view[9];
-	
-	//std::cerr << "CURRENT PLAYER LOCATION (" << playerPosX << "," << playerPosY << "," << playerPosZ << ")" << std::endl;
-
-	
-}
-*/
 //-------------------------------------------------------------------
 // motion 
 //-------------------------------------------------------------------
@@ -173,22 +151,6 @@ void passiveMotion(int x, int y){
 
 	cur_x = x;
 	cur_y = y;
-  
-	// Check which direction the mouse is moving
-/*
-	// Looking up
-	if (prev_y > cur_y)
-			cameraAngleX = cameraAngleX - cameraRotateMotion(cur_y, prev_y);
-	// Looking Down
-	if (prev_y < cur_y)
-			cameraAngleX = cameraAngleX + cameraRotateMotion(cur_y, prev_y);
-	// Looking Right
-	if (prev_x < cur_x)
-			cameraAngleY = cameraAngleY + cameraRotateMotion(cur_x, prev_x);
-	// Looking Left
-	if (prev_x > cur_x)
-			cameraAngleY = cameraAngleY - cameraRotateMotion(cur_x, prev_x);
-*/
 
 // For the tank turret
 
@@ -202,10 +164,7 @@ void passiveMotion(int x, int y){
   prev_x = cur_x;
   prev_y = cur_y;
 
-	//updatePlayerDirection();
-
   glutPostRedisplay();
-
 }
 
 //-------------------------------------------------------------------
@@ -251,18 +210,11 @@ void display(void)
 	glViewport(0, 0, scrWidth, scrHeight);
 	gluPerspective(40.0, (GLfloat)scrWidth/(GLfloat)scrHeight, 0.1, 1000.0);
 
-	// Camera Rotation
-	//glRotated(cameraAngleX / 10, 1, 0, 0);
-	//glRotated(cameraAngleY / 10, 0, 1, 0);
-	//glRotated(cameraAngleZ / 10, 0, 0, 1);
-
 	// Give a better viewing angle
 	glRotated(20, 1, 0, 0);
 
 	// Make camera rotate with turret direction
 	glRotated(-turretDirection, 0, 1, 0);
-
-	
 
 	// Camera Translation
 	glTranslated(
@@ -308,31 +260,22 @@ void keyboard(unsigned char k, int x, int y)
   switch(k)
     {
 		case 'a':
-			//playerPosX = playerPosX - 5;
 			// Rotate the tank left
 			tankDirection = tankDirection + 1.0;
 			break;
 		case 'd':
-			//playerPosX = playerPosX + 5;
 			// Rotate the tank right
 			tankDirection = tankDirection - 1.0;
-
-			//std::cerr << "Direction: " << playerDirection << std::endl;
-
 			break;
 		case 'w':
-			// We're only moving the tank forward, not the camera
-			// So must change this later
-			//playerPosX = playerPosX + (cameraDirectionX * 5);
-			//playerPosZ = playerPosZ + (cameraDirectionZ * 5);
+			// Move the tank forward
 			playerPosX = playerPosX - sin(tankDirection*(M_PI/180))*1;
 			playerPosZ = playerPosZ - cos(tankDirection*(M_PI/180))*1;			
 			// Update the Y value based on height data
 			playerPosY = (12 * game.getHeight(playerPosX, playerPosZ)) + 1;
 			break;
 		case 's':
-			//playerPosZ = playerPosZ + 5;
-			// Move the tank backwards
+			// Move the tank backward
 			playerPosX = playerPosX + sin(tankDirection*(M_PI/180))*1;
 			playerPosZ = playerPosZ + cos(tankDirection*(M_PI/180))*1;			
 			// Update the Y value based on height data
