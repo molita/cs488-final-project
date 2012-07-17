@@ -124,11 +124,14 @@ void render(){
 		glCallList(2);
 
 		glColor3f(1, 0, 0);
-		
+
 		glPushMatrix();
 		glLoadIdentity();
 		glTranslated(playerPosX, playerPosY, playerPosZ);
-		glRotated(playerDirection, 0, 1, 0);
+		//glTranslated(playerPosX + 5, playerPosY, playerPosZ);
+		glRotated(playerDirection - 90, 0, 1, 0);
+		//glTranslated(playerPosX - 5, playerPosY, playerPosZ);
+
 		glmDraw(model, GLM_SMOOTH);
 	
 		glPopMatrix();
@@ -238,21 +241,17 @@ void display(void)
 	glLoadIdentity();
 	glViewport(0, 0, scrWidth, scrHeight);
 	gluPerspective(40.0, (GLfloat)scrWidth/(GLfloat)scrHeight, 0.1, 1000.0);
-/*
-	gluLookAt(
-		-playerPosX + (cameraDirectionX*5), -playerPosY - 5, -playerPosZ + (cameraDirectionZ*5),
-		-playerPosX, -playerPosY, -playerPosZ,
-		0, 1, 0);
-*/
+
 	// Camera Rotation
 	glRotated(cameraAngleX / 10, 1, 0, 0);
 	glRotated(cameraAngleY / 10, 0, 1, 0);
 	glRotated(cameraAngleZ / 10, 0, 0, 1);
 
-	
-
 	// Camera Translation
-	glTranslated(-playerPosX + 5, -playerPosY, -playerPosZ + 5);
+	glTranslated(
+		-playerPosX + 10*(cos((playerDirection - 90)*(M_PI/180))*cos(180*(M_PI/180))), 
+		-playerPosY - 2, 
+		-playerPosZ - 10*(sin((playerDirection - 90)*(M_PI/180))*cos(180*(M_PI/180))));
 
 
 	/* change to model view for drawing
@@ -295,22 +294,25 @@ void keyboard(unsigned char k, int x, int y)
 		case 'a':
 			//playerPosX = playerPosX - 5;
 			// Rotate the tank left
-			playerDirection = playerDirection + 0.8;
+			playerDirection = playerDirection + 1.0;
 			break;
 		case 'd':
 			//playerPosX = playerPosX + 5;
 			// Rotate the tank right
-			playerDirection = playerDirection - 0.8;
+			playerDirection = playerDirection - 1.0;
+
+			std::cerr << "Direction: " << playerDirection << std::endl;
+
 			break;
 		case 'w':
 			// We're only moving the tank forward, not the camera
 			// So must change this later
-			//playerPosX = playerPosX + (cameraDirectionZ * 5);
+			//playerPosX = playerPosX + (cameraDirectionX * 5);
 			//playerPosZ = playerPosZ + (cameraDirectionZ * 5);
-			playerPosX = playerPosX + sin(playerDirection)*5;
-			playerPosZ = playerPosZ + cos(playerDirection)*5;			
+			playerPosX = playerPosX - sin(playerDirection*(M_PI/180))*1;
+			playerPosZ = playerPosZ - cos(playerDirection*(M_PI/180))*1;			
 			// Update the Y value based on height data
-				playerPosY = (12 * game.getHeight(playerPosX, playerPosZ)) + 1;
+			//	playerPosY = (12 * game.getHeight(playerPosX, playerPosZ)) + 1;
 			break;
 		case 's':
 			//playerPosZ = playerPosZ + 5;
@@ -359,7 +361,7 @@ void init(int argc, char** argv)
 	glmScale(model, 0.02);
 	glmVertexNormals(model, 180.0, false);
 
-	// Instantiate the game
+	// Isin(playerDirection*(M_PI/180))*1nstantiate the game
 	game = Game();
 
 	
@@ -455,7 +457,7 @@ int main(int argc, char** argv){
 		playerPosY = 10;
 		playerPosZ = 0;
 
-		playerDirection = 0;
+		playerDirection = 270;
 
     // initialize callback
     glutDisplayFunc(display);
