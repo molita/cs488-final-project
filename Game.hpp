@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <iostream>
 
+#include "Texture.h"
+
 // Display Lists
 #define WORLD 1
 
@@ -19,6 +21,7 @@ class Game {
 		~Game();	// Destructor
 
 	double getHeight(double x, double y);
+	void drawSkybox();
 
 	private:
 		// Generates a world using a heightmap
@@ -27,6 +30,13 @@ class Game {
 
 		void GenerateWorld(std::string file);
 		void drawWorldMeshVertex(double x, double y, double z);
+
+		//Texture sbFront, sbBack, sbLeft, sbRight, sbTop;		// Skybox textures
+		void setupSkybox();		// Function to set up skybox
+
+		GLuint LoadTexture( const char * filename, int width, int height);
+
+		bool runOnce;
 
 };
 

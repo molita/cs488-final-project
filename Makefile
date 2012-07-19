@@ -37,7 +37,8 @@ OBJS = \
 		glmimg_png.o \
 		glmimg_sdl.o \
 		glmimg_sim.o \
-		glm_util.o
+		glm_util.o \
+		Texture.o
 		
 compileobjs: $(OBJS)
 
@@ -47,7 +48,8 @@ HEADERS = \
     Game.hpp \
     Unit.hpp \
 		glm.h \
-		glmint.h
+		glmint.h \
+		Texture.h
 
 lib_tutorial: $(HEADERS) $(OBJS) Makefile
 	ar rvs libsm $(OBJS)

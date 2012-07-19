@@ -60,9 +60,7 @@ int music_on = 0;
 
 
 // Camera Variables
-double cameraPosX, cameraPosY, cameraPosZ;
-double cameraLookAtX, cameraLookAtY, cameraLookAtZ;		// May not be needed anymore
-double cameraAngleX, cameraAngleY, cameraAngleZ;
+double cameraAngleX;
 
 
 // Player Variables
@@ -74,9 +72,14 @@ int prevDifference;
 
 Game game;
 
-// Test Model
+// Models
 GLMmodel* tankTurret;
 GLMmodel* tankBody;
+
+//// TEST
+GLuint testTexture;
+
+
 
 //--------------------------------------------------------------------
 //  State variables
@@ -120,6 +123,27 @@ void render(){
 		// The world mesh
 		glCallList(2);
 
+		// The Skybox
+		glPushMatrix();
+		glLoadIdentity();
+		
+		// Position and scale it
+		glTranslated(0, -50, 0);		// Move it down a little
+		glScaled(128, 128, 128);
+		
+		glEnable(GL_TEXTURE_2D);
+		glDisable(GL_LIGHTING);
+		glDisable(GL_BLEND);
+		
+		glColor3f(1, 1, 1);
+		glCallList(3);
+
+		glDisable(GL_TEXTURE_2D);
+		glEnable(GL_LIGHTING);
+		glEnable(GL_BLEND);
+
+		glPopMatrix();
+
 		// Body
 		glColor3f(1, 0, 0);
 		glPushMatrix();
@@ -133,13 +157,15 @@ void render(){
 		glPushMatrix();
 		glLoadIdentity();
 		glTranslated(
-			playerPosX+(0.7*cos(tankDirection*(M_PI/180))), 
+			playerPosX+(0.5*cos(tankDirection*(M_PI/180))), 
 			playerPosY+0.8, 
 			playerPosZ-(0.5*sin(tankDirection*(M_PI/180))));
 
 		glRotated(turretDirection - 90, 0, 1, 0);
 		glmDraw(tankTurret, GLM_SMOOTH);
-	
+
+		glColor3f(1, 1, 1);
+
 }
 
 // Function to calculate the amount to rotate based on mouse movement
@@ -165,8 +191,18 @@ void passiveMotion(int x, int y){
 	cur_x = x;
 	cur_y = y;
 
-// For the tank turret
+	// For looking up and down TODO
 
+	// Looking up
+	if (prev_y < cur_y && cameraAngleX < 20 && cameraAngleX > -5)
+		if (cameraAngleX > -4)
+			cameraAngleX = cameraAngleX--;// cameraRotateMotion(cur_y, prev_y);
+	// Looking Down
+	if (prev_y > cur_y && cameraAngleX > -5 && cameraAngleX < 20)
+		if (cameraAngleX < 19)
+			cameraAngleX = cameraAngleX++;//cameraRotateMotion(cur_y, prev_y);
+
+// For the tank turret
 	// Looking Right
 	if (prev_x < cur_x)
 			turretDirection = turretDirection - cameraRotateMotion(cur_x, prev_x);
@@ -223,8 +259,11 @@ void display(void)
 	glViewport(0, 0, scrWidth, scrHeight);
 	gluPerspective(40.0, (GLfloat)scrWidth/(GLfloat)scrHeight, 0.1, 1000.0);
 
+	// X axis rotation
+	glRotated(cameraAngleX, 1, 0, 0);
+
 	// Give a better viewing angle
-	glRotated(20, 1, 0, 0);
+	//glRotated(20, 1, 0, 0);
 
 	// Make camera rotate with turret direction
 	glRotated(-turretDirection, 0, 1, 0);
@@ -313,7 +352,7 @@ void init(int argc, char** argv)
 	glShadeModel(GL_SMOOTH);
 	glEnable(GL_COLOR_MATERIAL);
 
-	glCullFace(GL_BACK);
+	//glCullFace(GL_BACK);
 
 	// Black Background
 	glClearColor(0.00f, 0.0f, 0.0f, 0.0f);
@@ -345,9 +384,6 @@ void init(int argc, char** argv)
 
 	// Instantiate the game
 	game = Game();
-
-	
-
 }
 
 //-------------------------------------------------------------------
@@ -418,31 +454,22 @@ int main(int argc, char** argv){
 
     // intialize glut and main window
     glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_RGBA|GLUT_DOUBLE|GLUT_DEPTH);
+    glutInitDisplayMode(GLUT_RGB|GLUT_DOUBLE|GLUT_DEPTH);
     glutInitWindowSize(scrWidth, scrHeight);
     main_window = glutCreateWindow("Render Test");
-	
-		// Initialize Camera Variables
-		cameraPosX = 64;
-		cameraPosY = 0;
-		cameraPosZ = -264;
-		cameraLookAtX = 0;
-		cameraLookAtY = -300;
-		cameraLookAtZ = -1000;
-
-		cameraAngleX = 0;
-		cameraAngleY = 0;
-		cameraAngleZ = 0;
 
 		// Initialize Player Variables
-		playerPosX = 0;
-		playerPosY = 10;
-		playerPosZ = 0;
+		playerPosX = 40;
+		playerPosY = 4.2;
+		playerPosZ = -40;
 
 		turretDirection = 270;
 
+		cameraAngleX = 19;
+
     // initialize callback
     glutDisplayFunc(display);
+		glutIdleFunc(display);
     glutReshapeFunc(reshape);
     glutKeyboardFunc(keyboard); 	
     glutMouseFunc(mouse);
@@ -457,4 +484,7 @@ int main(int argc, char** argv){
   
     return 0;
 }
+
+
+
 
