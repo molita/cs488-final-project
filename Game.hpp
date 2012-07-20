@@ -34,8 +34,6 @@ class Game {
 		//Texture sbFront, sbBack, sbLeft, sbRight, sbTop;		// Skybox textures
 		void setupSkybox();		// Function to set up skybox
 
-		GLuint LoadTexture( const char * filename, int width, int height);
-
 		bool runOnce;
 
 };

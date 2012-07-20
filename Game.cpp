@@ -125,7 +125,7 @@ void Game::GenerateWorld(std::string file) {
 	// 0 = Lines (Wireframe)
 	// 1 = Triangles
 	// 2 = Quads
-	int drawType = 1;			// DON'T CHANGE THIS!!
+	int drawType = 1;
 
 	switch (drawType)
 	{
@@ -207,10 +207,10 @@ void Game::GenerateWorld(std::string file) {
 					break;
 				// Draw Quads
 				case 2:
-					drawWorldMeshVertex(bottomLeftX, bottomLeftY, bottomLeftZ);
-					drawWorldMeshVertex(bottomRightX, bottomRightY, bottomRightZ);
-					drawWorldMeshVertex(topRightX, topRightY, topRightZ);
-					drawWorldMeshVertex(topLeftX, topLeftY, topLeftZ);
+					glTexCoord2f(0, 0); drawWorldMeshVertex(bottomLeftX, bottomLeftY, bottomLeftZ);
+					glTexCoord2f(1, 0); drawWorldMeshVertex(bottomRightX, bottomRightY, bottomRightZ);
+					glTexCoord2f(1, 1); drawWorldMeshVertex(topRightX, topRightY, topRightZ);
+					glTexCoord2f(0, 1); drawWorldMeshVertex(topLeftX, topLeftY, topLeftZ);
 				break;
 			}
 		}

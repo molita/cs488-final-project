@@ -52,7 +52,7 @@ float prev_x = 0;
 float prev_y = 0;
 int buttons[5] = {GLUT_UP, GLUT_UP, GLUT_UP, GLUT_UP, GLUT_UP};
 
-int SND_ID_1 , SND_ID_2, SND_ID_3, MUS_ID_4;
+int SND_shoot;
 
 float xpos = 0, ypos = 0;
 
@@ -67,6 +67,13 @@ double cameraAngleX;
 double playerPosX, playerPosY, playerPosZ;
 double tankDirection;
 double turretDirection;
+double tankRadius = 3;
+
+
+// Alien variables
+double alienPosX, alienPosY, alienPosZ;
+double alienDirection;
+double alienRadius = 1;
 
 int prevDifference;
 
@@ -77,10 +84,7 @@ GLMmodel* tankTurret;
 GLMmodel* tankBody;
 GLMmodel* alien;
 
-//// TEST
-GLuint testTexture;
-
-
+Texture alienTexture;
 
 //--------------------------------------------------------------------
 //  State variables
@@ -110,6 +114,54 @@ void lights(){
     glLightfv(GL_LIGHT0, GL_POSITION, light_position1);
     
 
+}
+
+// Check Collision
+// For now, doing just tank vs one alien
+// sX and sZ are the source X and Z
+// dX and dZ are the destination X and Z
+
+// Type 0 is tank
+// Type 1 is alien
+
+// Returns true if movement is acceptable
+bool checkCollision(double sX, double sZ, double dX, double dZ, int type, double amountTranslatedX, double amountTranslatedZ)
+{
+	double tempX = sX + amountTranslatedX;
+	double tempZ = sZ + amountTranslatedZ;
+
+	// Radius of the source and destination objects
+	int sR, dR;
+	if (type == 0)
+	{
+		sR = tankRadius;
+		dR = alienRadius;
+	}
+	if (type == 1)
+	{
+		sR = alienRadius;
+		dR = tankRadius;
+	}
+	
+	// This essentially checks if the intended move will go inside the bounding box of the destination
+	if (
+		((tempX + sR) > (dX - dR)) &&	// Check left side collision
+		((tempX - sR) < (dX + dR)) && // Check right side collision
+		((tempZ - sR) < (dZ + dR)) &&	// Check bottom side collision
+		((tempZ + sR) > (dZ - dR)))		// Check top side collision
+		// Return false, because there is collision		
+		return false;
+	else
+	{
+		// Additionally, check the Y value
+		// Cannot go on Mountains or Water
+		
+		if ((game.getHeight(tempX, tempZ)) > 0.1 &&
+				(game.getHeight(tempX, tempZ)) < 0.5)
+			return true;	
+		else
+			return false;
+	}
 }
 
 //-------------------------------------------------------------------
@@ -171,9 +223,11 @@ void render(){
 		glColor3f(1, 1, 1);
 		glPushMatrix();
 		glLoadIdentity();
-		glTranslated(40, 6, -40);
+		glTranslated(alienPosX, alienPosY, alienPosZ);
 
-		glmDraw(alien, GLM_SMOOTH | GLM_TEXTURE);
+		glBindTexture(GL_TEXTURE_2D, alienTexture.texID); 
+
+		glmDraw(alien, GLM_SMOOTH);
 
 		glColor3f(1, 1, 1);
 }
@@ -231,24 +285,30 @@ void passiveMotion(int x, int y){
 //-------------------------------------------------------------------
 void mouse(int button, int state, int x, int y)
   {
-    if(button>0){	glutWarpPointer(scrWidth/2, scrHeight/2);
+		switch (button)
+		{
+			// Left Click
+			case 0:
+				SM.PlaySound(SND_shoot);
+				break;
+			
+		}
+/*
+		std::cerr << button;
 
-	  if(state==GLUT_DOWN && buttons[button]==GLUT_UP)
-	      SM.PlaySound(button);
+    if(button>0){	
 
-	  if(state==GLUT_UP && buttons[button]==GLUT_DOWN)
-	      SM.StopSound(button);
-      } else {
-	  if(state==GLUT_DOWN){
-	      if(!music_on){
-		  music_on = 1;
-		  SM.PlayMusic(MUS_ID_4);
-	      }	else {
-		  music_on = 0;
-		  SM.StopMusic(MUS_ID_4); 
-	      }
-	  } 
-      }
+			if(state==GLUT_DOWN && buttons[button]==GLUT_UP)
+			    SM.PlaySound(SND_shoot);
+
+			if(state==GLUT_UP && buttons[button]==GLUT_DOWN)
+			    SM.StopSound(button);
+		    } else {
+			if(state==GLUT_DOWN){
+
+			} 
+    }
+*/
       buttons[button] = state;
 
       glutPostRedisplay();
@@ -316,6 +376,8 @@ void display(void)
 //-------------------------------------------------------------------
 void keyboard(unsigned char k, int x, int y)
 {
+	double xMove, zMove;
+
   switch(k)
     {
 		case 'a':
@@ -328,10 +390,20 @@ void keyboard(unsigned char k, int x, int y)
 			break;
 		case 'w':
 			// Move the tank forward
-			playerPosX = playerPosX - sin(tankDirection*(M_PI/180))*1;
-			playerPosZ = playerPosZ - cos(tankDirection*(M_PI/180))*1;			
+	
+			xMove = -sin(tankDirection*(M_PI/180))*1;
+			zMove = -cos(tankDirection*(M_PI/180))*1;
+
+			if (checkCollision(playerPosX, playerPosZ, alienPosX, alienPosZ, 0, xMove, zMove))
+			{
+				playerPosX = playerPosX + xMove;
+				playerPosZ = playerPosZ + zMove;
+				playerPosY = (12 * game.getHeight(playerPosX, playerPosZ)) + 1;
+			}
+		/*	playerPosX = playerPosX - sin(tankDirection*(M_PI/180))*1;
+			playerPosZ = playerPosZ - cos(tankDirection*(M_PI/180))*1;			*/
 			// Update the Y value based on height data
-			playerPosY = (12 * game.getHeight(playerPosX, playerPosZ)) + 1;
+			//playerPosY = (12 * game.getHeight(playerPosX, playerPosZ)) + 1;
 			break;
 		case 's':
 			// Move the tank backward
@@ -389,10 +461,16 @@ void init(int argc, char** argv)
 	glmScale(tankBody, 0.02);
 	glmVertexNormals(tankBody, 180.0, false);
 
+	LoadTGA(&alienTexture, "models/monster.tga");
+	glGenTextures(1, &alienTexture.texID);
+	glBindTexture(GL_TEXTURE_2D, alienTexture.texID);
+	glTexImage2D(GL_TEXTURE_2D, 0, alienTexture.bpp / 8, alienTexture.width, alienTexture.height, 0, alienTexture.type, GL_UNSIGNED_BYTE, alienTexture.imageData);
+
+	// Alien
 	alien = glmReadOBJ("models/meleeAlien.obj");
-	glmScale(alien, 0.2);
+	glmScale(alien, 0.05);
 	glmFacetNormals(alien);
-	glmVertexNormals(alien, 180.0, false);
+	glmVertexNormals(alien, 90.0, false);
 	//glmVertexNormals(alien, 180.0, false);
 
 	// Instantiate the game
@@ -458,23 +536,24 @@ int main(int argc, char** argv){
     int main_window;
     scrWidth = 1200;
     scrHeight = 800;
-      
-
-    SND_ID_1 = SM.LoadSound("card.wav");
-    SND_ID_2 = SM.LoadSound("OBS.wav");
-    SND_ID_3 = SM.LoadSound("ghost.wav");
-    MUS_ID_4 = SM.LoadMusic("UNREAL.S3M");
+    
+		SND_shoot = SM.LoadSound("Sounds/shoot.wav");
 
     // intialize glut and main window
     glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_RGB|GLUT_DOUBLE|GLUT_DEPTH);
+    glutInitDisplayMode(GLUT_RGBA|GLUT_DOUBLE|GLUT_DEPTH);
     glutInitWindowSize(scrWidth, scrHeight);
-    main_window = glutCreateWindow("Render Test");
+    main_window = glutCreateWindow("Mutant Invaders");
 
 		// Initialize Player Variables
 		playerPosX = 40;
 		playerPosY = 4.2;
 		playerPosZ = -40;
+
+		// Alien Start Position
+		alienPosX = 45;
+		alienPosY = 12 * game.getHeight(45, -45);
+		alienPosZ = -45;
 
 		turretDirection = 270;
 
