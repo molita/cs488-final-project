@@ -5,6 +5,7 @@
 
 
 Texture sbFront, sbBack, sbLeft, sbRight, sbTop;
+Texture grassTexture, waterTexture, mountainTexture;
 
 Game::Game(){
 	std::string heightmap;
@@ -43,8 +44,8 @@ double Game::getHeight(double x, double y)
 void Game::GenerateWorld(std::string file) {
 
 	// Load the image
-	int h = 128;
-	int w = 128;
+	int h = 500;
+	int w = 500;
 	Image img(w, h, 1);
 	img.loadPng(file);
 
@@ -58,9 +59,6 @@ void Game::GenerateWorld(std::string file) {
 	// Create the new display list
 	glNewList(2, GL_COMPILE);
 	
-	// Temporarily set color of vertex to green
-	// glColor3f(0, 1, 0);
-	
 	// Temporary variables to store x, y, and z
 	// Allows for easier readability too
 	int bottomLeftX, bottomLeftZ;
@@ -70,6 +68,56 @@ void Game::GenerateWorld(std::string file) {
 	double bottomLeftY, bottomRightY, topLeftY, topRightY;
 
 
+
+	// TEST FOR TEXTURING
+	LoadTGA(&grassTexture, "Textures/grass.tga");
+/*	LoadTGA(&waterTexture, "Textures/water.tga");
+	LoadTGA(&mountainTexture, "Textures/mountain.tga");
+*/
+	// Grass Texture
+	glGenTextures(1, &grassTexture.texID);
+	glBindTexture(GL_TEXTURE_2D, grassTexture.texID);
+	glTexImage2D(GL_TEXTURE_2D, 0, grassTexture.bpp / 8, grassTexture.width, grassTexture.height, 0, grassTexture.type, GL_UNSIGNED_BYTE, grassTexture.imageData);
+	
+	// Generate Mipmaps
+	glTexParameterf(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+
+	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T, GL_REPEAT);
+/* Only using grass texture, has a neat effect
+	// Water Texture
+	glGenTextures(1, &waterTexture.texID);
+	glBindTexture(GL_TEXTURE_2D, waterTexture.texID);
+	glTexImage2D(GL_TEXTURE_2D, 0, waterTexture.bpp / 8, waterTexture.width, waterTexture.height, 0, waterTexture.type, GL_UNSIGNED_BYTE, waterTexture.imageData);
+	
+	// Generate Mipmaps
+	glTexParameterf(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+
+	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	// Mountain Texture
+	glGenTextures(1, &mountainTexture.texID);
+	glBindTexture(GL_TEXTURE_2D, mountainTexture.texID);
+	glTexImage2D(GL_TEXTURE_2D, 0, mountainTexture.bpp / 8, mountainTexture.width, mountainTexture.height, 0, mountainTexture.type, GL_UNSIGNED_BYTE, mountainTexture.imageData);
+	
+	// Generate Mipmaps
+	glTexParameterf(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+
+	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	glBindTexture(GL_TEXTURE_2D, grassTexture.texID);
+*/
 	// Multiplier for height. Used for scaling
 	double multiplier = 1;
 
@@ -77,20 +125,22 @@ void Game::GenerateWorld(std::string file) {
 	// 0 = Lines (Wireframe)
 	// 1 = Triangles
 	// 2 = Quads
-	int drawType = 1;
+	int drawType = 1;			// DON'T CHANGE THIS!!
 
 	switch (drawType)
 	{
+		// Wireframe
 		case 0:
 			glBegin(GL_LINES);
 			break;
+		// Triangles
 		case 1:
 			glBegin(GL_TRIANGLES);
 			break;
+		// Quads
 		case 2:
 			glBegin(GL_QUADS);
 			break;
-		
 	}
 
 	for (int j = 0; j < img.height() - 1; j++)
@@ -120,6 +170,16 @@ void Game::GenerateWorld(std::string file) {
 			bottomLeftZ = -bottomLeftZ;
 			bottomRightZ = -bottomRightZ;
 
+			// Set vertex colors to White for texturing
+			glColor3f(1, 1, 1);
+
+			// Set the thresholds for Water, Grass, and Mountain
+			double water = 0.1;
+			double grass = 0.5;
+
+			// The scale for the y value
+			double yScale =	12;
+
 			// Draw the mesh using either Wireframe, Triangles, or Quads
 			switch  (drawType)
 			{
@@ -136,15 +196,14 @@ void Game::GenerateWorld(std::string file) {
 					drawWorldMeshVertex(bottomRightX, bottomRightY, bottomRightZ);
 					drawWorldMeshVertex(topRightX, topRightY, topRightZ);
 					break;
-
 				// Draw Triangles
 				case 1:
-					drawWorldMeshVertex(bottomLeftX, bottomLeftY, bottomLeftZ);
-					drawWorldMeshVertex(bottomRightX, bottomRightY, bottomLeftZ);
-					drawWorldMeshVertex(topLeftX, topLeftY, topLeftZ);
-					drawWorldMeshVertex(topRightX, topRightY, topRightZ);
-					drawWorldMeshVertex(bottomRightX, bottomRightY, bottomRightZ);
-					drawWorldMeshVertex(topLeftX, topLeftY, topLeftZ);
+					glTexCoord2f(0, 0); drawWorldMeshVertex(bottomLeftX, bottomLeftY, bottomLeftZ);
+					glTexCoord2f(1, 0); drawWorldMeshVertex(bottomRightX, bottomRightY, bottomRightZ);
+					glTexCoord2f(0, 1); drawWorldMeshVertex(topLeftX, topLeftY, topLeftZ);
+					glTexCoord2f(1, 1); drawWorldMeshVertex(topRightX, topRightY, topRightZ);
+					glTexCoord2f(1, 0); drawWorldMeshVertex(bottomRightX, bottomRightY, bottomRightZ);
+					glTexCoord2f(0, 1); drawWorldMeshVertex(topLeftX, topLeftY, topLeftZ);	
 					break;
 				// Draw Quads
 				case 2:
@@ -166,7 +225,6 @@ void Game::GenerateWorld(std::string file) {
 void Game::drawWorldMeshVertex(double x, double y, double z)
 {
 	// Set the thresholds for Water, Grass, and Mountain
-
 	double water = 0.1;
 	double grass = 0.5;
 
@@ -175,7 +233,7 @@ void Game::drawWorldMeshVertex(double x, double y, double z)
 
 	// Set the color based on height
 	if (y < water)
-		glColor3f(0, 0, (y/water)+0.5);	
+		glColor3f(0, 0, (y/water)+0.5);
   else if (y < grass)
 		glColor3f(0, (y/grass)+0.01, 0);
 	else
@@ -196,51 +254,60 @@ void Game::setupSkybox()
 
 	// Load texture data
 
+	// Front Wall
 	glGenTextures(1, &sbFront.texID);
 	glBindTexture(GL_TEXTURE_2D, sbFront.texID);
 	glTexImage2D(GL_TEXTURE_2D, 0, sbFront.bpp / 8, sbFront.width, sbFront.height, 0, sbFront.type, GL_UNSIGNED_BYTE, sbFront.imageData);
 
+	// Front Wall Parameters
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
   glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
 
+	// Back Wall
 	glGenTextures(1, &sbBack.texID);
 	glBindTexture(GL_TEXTURE_2D, sbBack.texID);
 	glTexImage2D(GL_TEXTURE_2D, 0, sbBack.bpp / 8, sbBack.width, sbBack.height, 0, sbBack.type, GL_UNSIGNED_BYTE, sbBack.imageData);
 
+	// Back Wall Parameters
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
   glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
 
+	// Left Wall
 	glGenTextures(1, &sbLeft.texID);
 	glBindTexture(GL_TEXTURE_2D, sbLeft.texID);
 	glTexImage2D(GL_TEXTURE_2D, 0, sbLeft.bpp / 8, sbLeft.width, sbLeft.height, 0, sbLeft.type, GL_UNSIGNED_BYTE, sbLeft.imageData);
 
+	// Left Wall Parameters
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
   glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
 
+	// Right Wall
 	glGenTextures(1, &sbRight.texID);
 	glBindTexture(GL_TEXTURE_2D, sbRight.texID);
 	glTexImage2D(GL_TEXTURE_2D, 0, sbRight.bpp / 8, sbRight.width, sbRight.height, 0, sbRight.type, GL_UNSIGNED_BYTE, sbRight.imageData);
 
+	// Right Wall Parameters
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
   glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
 
+	// Top Wall (Ceiling)
 	glGenTextures(1, &sbTop.texID);
 	glBindTexture(GL_TEXTURE_2D, sbTop.texID);
 	glTexImage2D(GL_TEXTURE_2D, 0, sbTop.bpp / 8, sbTop.width, sbTop.height, 0, sbTop.type, GL_UNSIGNED_BYTE, sbTop.imageData);
 	
-	// Set texture parameters
+	// Top Wall Paramaters
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
   glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
@@ -297,48 +364,4 @@ void Game::setupSkybox()
 
 	glEndList();
 }
-
-GLuint Game::LoadTexture( const char * filename, int width, int height )
-{
-    GLuint texture;
-    unsigned char * data;
-    FILE * file;
-
-    //The following code will read in our RAW file
-    file = fopen( filename, "rb" );
-    if ( file == NULL ) return 0;
-    data = (unsigned char *)malloc( width * height * 3 );
-    fread( data, width * height * 3, 1, file );
-    fclose( file );
-
-    glGenTextures( 1, &texture ); //generate the texture with the loaded data
-    glBindTexture( GL_TEXTURE_2D, texture ); //bind the textureto it’s array
-    glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE ); //set texture environment parameters
-
-    //here we are setting what textures to use and when. The MIN filter is which quality to show
-    //when the texture is near the view, and the MAG filter is which quality to show when the texture
-    //is far from the view.
-
-    //The qualities are (in order from worst to best)
-    //GL_NEAREST
-    //GL_LINEAR
-    //GL_LINEAR_MIPMAP_NEAREST
-    //GL_LINEAR_MIPMAP_LINEAR
-
-    //And if you go and use extensions, you can use Anisotropic filtering textures which are of an
-    //even better quality, but this will do for now.
-    //glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-    //glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-
-    //Here we are setting the parameter to repeat the texture instead of clamping the texture
-    //to the edge of our shape. 
-    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-
-    //Generate the texture
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    free( data ); //free the texture
-    return texture; //return whether it was successfull
-}
-
 

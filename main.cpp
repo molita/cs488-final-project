@@ -75,6 +75,7 @@ Game game;
 // Models
 GLMmodel* tankTurret;
 GLMmodel* tankBody;
+GLMmodel* alien;
 
 //// TEST
 GLuint testTexture;
@@ -120,29 +121,31 @@ void render(){
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glLoadIdentity(); // Reset the view
 
-		// The world mesh
-		glCallList(2);
-
 		// The Skybox
 		glPushMatrix();
 		glLoadIdentity();
 		
 		// Position and scale it
-		glTranslated(0, -50, 0);		// Move it down a little
+		// Center it around player and move it down a little
+		glTranslated(playerPosX - 64, -70, playerPosZ + 64);
 		glScaled(128, 128, 128);
 		
-		glEnable(GL_TEXTURE_2D);
 		glDisable(GL_LIGHTING);
 		glDisable(GL_BLEND);
+		glDisable(GL_DEPTH_TEST);
 		
 		glColor3f(1, 1, 1);
 		glCallList(3);
 
-		glDisable(GL_TEXTURE_2D);
 		glEnable(GL_LIGHTING);
 		glEnable(GL_BLEND);
+		glEnable(GL_DEPTH_TEST);		
 
 		glPopMatrix();
+
+	
+		// The world mesh
+		glCallList(2);
 
 		// Body
 		glColor3f(1, 0, 0);
@@ -164,8 +167,15 @@ void render(){
 		glRotated(turretDirection - 90, 0, 1, 0);
 		glmDraw(tankTurret, GLM_SMOOTH);
 
+		// Alien
 		glColor3f(1, 1, 1);
+		glPushMatrix();
+		glLoadIdentity();
+		glTranslated(40, 6, -40);
 
+		glmDraw(alien, GLM_SMOOTH | GLM_TEXTURE);
+
+		glColor3f(1, 1, 1);
 }
 
 // Function to calculate the amount to rotate based on mouse movement
@@ -191,16 +201,16 @@ void passiveMotion(int x, int y){
 	cur_x = x;
 	cur_y = y;
 
-	// For looking up and down TODO
+	// For looking up and down
 
 	// Looking up
 	if (prev_y < cur_y && cameraAngleX < 20 && cameraAngleX > -5)
 		if (cameraAngleX > -4)
-			cameraAngleX = cameraAngleX--;// cameraRotateMotion(cur_y, prev_y);
+			cameraAngleX = cameraAngleX - 0.5;// cameraRotateMotion(cur_y, prev_y);
 	// Looking Down
 	if (prev_y > cur_y && cameraAngleX > -5 && cameraAngleX < 20)
 		if (cameraAngleX < 19)
-			cameraAngleX = cameraAngleX++;//cameraRotateMotion(cur_y, prev_y);
+			cameraAngleX = cameraAngleX + 0.5;//cameraRotateMotion(cur_y, prev_y);
 
 // For the tank turret
 	// Looking Right
@@ -261,9 +271,6 @@ void display(void)
 
 	// X axis rotation
 	glRotated(cameraAngleX, 1, 0, 0);
-
-	// Give a better viewing angle
-	//glRotated(20, 1, 0, 0);
 
 	// Make camera rotate with turret direction
 	glRotated(-turretDirection, 0, 1, 0);
@@ -352,10 +359,10 @@ void init(int argc, char** argv)
 	glShadeModel(GL_SMOOTH);
 	glEnable(GL_COLOR_MATERIAL);
 
-	//glCullFace(GL_BACK);
+	glCullFace(GL_BACK);
 
 	// Black Background
-	glClearColor(0.00f, 0.0f, 0.0f, 0.0f);
+	glClearColor((float)99/255, (float)122/255, (float)192/255, 0.0f);
 	
 	glClearDepth(1.0f);
 
@@ -381,6 +388,12 @@ void init(int argc, char** argv)
 	tankBody = glmReadOBJ("models/TankBody.obj");
 	glmScale(tankBody, 0.02);
 	glmVertexNormals(tankBody, 180.0, false);
+
+	alien = glmReadOBJ("models/meleeAlien.obj");
+	glmScale(alien, 0.2);
+	glmFacetNormals(alien);
+	glmVertexNormals(alien, 180.0, false);
+	//glmVertexNormals(alien, 180.0, false);
 
 	// Instantiate the game
 	game = Game();
