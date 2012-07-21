@@ -23,14 +23,14 @@
 #include "glm/glm.h"
 #include "glm/glmint.h"
 
-//#include "Particle.hpp"
+
 
 #ifdef WIN32
 #include <windows.h>
 #endif /* WIN32 */
 
 #include <GL/gl.h>
-#include <GL/glu.h>hopDirection[0] = hopDirection[0]/magnitude;
+#include <GL/glu.h>
 #include <GL/glut.h>
 #ifdef WIN32
 #include "glui.h"
@@ -45,6 +45,8 @@
 
 #define MICKEY 1
 #define WORLDMESH 2
+
+#include "Particle.hpp"
 //-------------------------------------------------------------------
 // GLUT data 
 //-------------------------------------------------------------------
@@ -287,7 +289,9 @@ void render(){
 		glTranslated(playerPosX, playerPosY, playerPosZ);
 		glRotated(tankDirection - 90, 0, 1, 0);
 		glmDraw(tankBody, GLM_SMOOTH);
-
+	
+		glPopMatrix();
+		
 		// Turret
 		glColor3f(1, 0, 0);
 		glPushMatrix();
@@ -300,6 +304,14 @@ void render(){
 		glRotated(turretDirection - 90, 0, 1, 0);
 		glmDraw(tankTurret, GLM_SMOOTH);
 
+		glPopMatrix();
+
+		glPushMatrix();
+		glLoadIdentity();
+		glTranslated(playerPosX, playerPosY + 2, playerPosZ);		
+		Display();
+		Idle();
+
 		// Alien
 		glColor3f(1, 1, 1);
 		glPushMatrix();
@@ -309,6 +321,11 @@ void render(){
 		//glBindTexture(GL_TEXTURE_2D, alienTexture.texID); 
 
 		glmDraw(alien, GLM_SMOOTH);
+
+		//Idle();
+		//glPushMatrix();
+		//glTranslated(playerPosX, playerPosY + 3, playerPosZ);		
+		//Display();
 
 		glColor3f(1, 1, 1);
 }
@@ -447,8 +464,6 @@ void display(void)
 	render();
 
 	animateAlien();
-	
-  //Display();
 
 	// dump the whole buffer onto the screen should fix my bug
 	glFinish();
@@ -600,6 +615,8 @@ void entry(int state)
 		if (prev_x > cur_x)
 			warpToX++;
 	
+		
+
 		glutWarpPointer(warpToX, warpToY);
 	}
 }
@@ -649,7 +666,7 @@ int main(int argc, char** argv){
     init(argc, argv);
 
 		calculateAlienNextHop();
-    //Init();
+    Init();
 
 		// Calculate the alien Hop Modifier
 		alienHopModifier = alienMaxHopHeight/60;
