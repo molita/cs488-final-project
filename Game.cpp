@@ -44,8 +44,8 @@ double Game::getHeight(double x, double y)
 void Game::GenerateWorld(std::string file) {
 
 	// Load the image
-	int h = 500;
-	int w = 500;
+	int h = 128;
+	int w = 128;
 	Image img(w, h, 1);
 	img.loadPng(file);
 

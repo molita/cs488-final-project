@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <cmath>
+#include <time.h>
 
 #include "SoundManager.h"
 
@@ -22,12 +23,14 @@
 #include "glm/glm.h"
 #include "glm/glmint.h"
 
+//#include "Particle.hpp"
+
 #ifdef WIN32
 #include <windows.h>
 #endif /* WIN32 */
 
 #include <GL/gl.h>
-#include <GL/glu.h>
+#include <GL/glu.h>hopDirection[0] = hopDirection[0]/magnitude;
 #include <GL/glut.h>
 #ifdef WIN32
 #include "glui.h"
@@ -67,13 +70,25 @@ double cameraAngleX;
 double playerPosX, playerPosY, playerPosZ;
 double tankDirection;
 double turretDirection;
-double tankRadius = 3;
+double tankRadius = 2;
 
 
 // Alien variables
 double alienPosX, alienPosY, alienPosZ;
 double alienDirection;
-double alienRadius = 1;
+double alienRadius = 0.5;
+
+double alienAnimate1[3];
+double alienAnimate2[3];
+double alienAnimate3[3];
+
+double alienXmove, alienZmove;
+double animationCounter = 0;
+double hopDestination[3];		// This will be a certain number of units in the hop direction
+double hopDirection[3];
+double alienHopModifier;
+double alienHopHeight;
+double alienMaxHopHeight = 3;
 
 int prevDifference;
 
@@ -84,7 +99,7 @@ GLMmodel* tankTurret;
 GLMmodel* tankBody;
 GLMmodel* alien;
 
-Texture alienTexture;
+//Texture alienTexture;
 
 //--------------------------------------------------------------------
 //  State variables
@@ -164,6 +179,72 @@ bool checkCollision(double sX, double sZ, double dX, double dZ, int type, double
 	}
 }
 
+void calculateAlienNextHop()
+{
+	hopDestination[3];		// This will be a certain number of units in the hop direction
+	hopDirection[3];
+		
+	// Get the direction unit vector
+	hopDirection[0] = playerPosX - alienPosX;
+	hopDirection[1] = playerPosY - alienPosY;
+	hopDirection[2] = playerPosZ - alienPosZ;
+
+	// Unitize it
+	double magnitude = sqrt(hopDirection[0]*hopDirection[0] + hopDirection[2]*hopDirection[2]);
+	hopDirection[0] = hopDirection[0]/magnitude;
+	hopDirection[1] = hopDirection[1]/magnitude;
+	hopDirection[2] = hopDirection[2]/magnitude;
+
+	hopDestination[0] = alienPosX + hopDirection[0];
+	hopDestination[2] = alienPosZ + hopDirection[2];
+	hopDestination[1] = game.getHeight(hopDestination[0], hopDestination[2]);
+	
+	alienXmove = hopDirection[0] / 60;
+	alienZmove = hopDirection[2] / 60;	
+}
+
+void animateAlien()
+{
+	// No need for animation counter
+	//if (animationCounter > 0)
+	//{
+		animationCounter = 0;
+
+		alienPosX = alienPosX + alienXmove;
+		alienPosZ = alienPosZ + alienZmove;
+		alienPosY = 12 * game.getHeight(alienPosX, alienPosZ) + alienHopHeight;
+
+
+	//}	
+	//else
+		//animationCounter++;
+
+	if (alienHopHeight >= alienMaxHopHeight)
+		alienHopModifier = -0.05;
+	else if (alienHopHeight <= 0)
+		alienHopModifier = 0.05;
+
+	alienHopHeight = alienHopHeight + alienHopModifier;
+
+	if (abs(alienPosX - hopDestination[0]) < 0.05)
+	{
+		// If true, there is collision
+		if (
+			((alienPosX + alienRadius) > (playerPosX - tankRadius)) &&	// Check left side collision
+			((alienPosX - alienRadius) < (playerPosX + tankRadius)) && // Check right side collision
+			((alienPosZ - alienRadius) < (playerPosZ + tankRadius)) &&	// Check bottom side collision
+			((alienPosZ + alienRadius) > (playerPosZ - tankRadius)))		// Check top side collision
+		{
+			alienPosX = rand() % 100 + 15;
+			alienPosZ = -(rand() % 100 + 15);			
+		}
+
+		calculateAlienNextHop();
+	}
+	
+
+}
+
 //-------------------------------------------------------------------
 // Custom render function
 //-------------------------------------------------------------------
@@ -225,7 +306,7 @@ void render(){
 		glLoadIdentity();
 		glTranslated(alienPosX, alienPosY, alienPosZ);
 
-		glBindTexture(GL_TEXTURE_2D, alienTexture.texID); 
+		//glBindTexture(GL_TEXTURE_2D, alienTexture.texID); 
 
 		glmDraw(alien, GLM_SMOOTH);
 
@@ -365,6 +446,10 @@ void display(void)
 
 	render();
 
+	animateAlien();
+	
+  //Display();
+
 	// dump the whole buffer onto the screen should fix my bug
 	glFinish();
 	glutSwapBuffers();
@@ -394,16 +479,13 @@ void keyboard(unsigned char k, int x, int y)
 			xMove = -sin(tankDirection*(M_PI/180))*1;
 			zMove = -cos(tankDirection*(M_PI/180))*1;
 
-			if (checkCollision(playerPosX, playerPosZ, alienPosX, alienPosZ, 0, xMove, zMove))
-			{
+			//if (checkCollision(playerPosX, playerPosZ, alienPosX, alienPosZ, 0, xMove, zMove))
+			//{
 				playerPosX = playerPosX + xMove;
 				playerPosZ = playerPosZ + zMove;
 				playerPosY = (12 * game.getHeight(playerPosX, playerPosZ)) + 1;
-			}
-		/*	playerPosX = playerPosX - sin(tankDirection*(M_PI/180))*1;
-			playerPosZ = playerPosZ - cos(tankDirection*(M_PI/180))*1;			*/
-			// Update the Y value based on height data
-			//playerPosY = (12 * game.getHeight(playerPosX, playerPosZ)) + 1;
+			//}
+
 			break;
 		case 's':
 			// Move the tank backward
@@ -434,7 +516,8 @@ void init(int argc, char** argv)
 	glCullFace(GL_BACK);
 
 	// Black Background
-	glClearColor((float)99/255, (float)122/255, (float)192/255, 0.0f);
+	glClearColor(0, 0, 0, 0);	
+	//glClearColor((float)99/255, (float)122/255, (float)192/255, 0.0f);
 	
 	glClearDepth(1.0f);
 
@@ -460,11 +543,6 @@ void init(int argc, char** argv)
 	tankBody = glmReadOBJ("models/TankBody.obj");
 	glmScale(tankBody, 0.02);
 	glmVertexNormals(tankBody, 180.0, false);
-
-	LoadTGA(&alienTexture, "models/monster.tga");
-	glGenTextures(1, &alienTexture.texID);
-	glBindTexture(GL_TEXTURE_2D, alienTexture.texID);
-	glTexImage2D(GL_TEXTURE_2D, 0, alienTexture.bpp / 8, alienTexture.width, alienTexture.height, 0, alienTexture.type, GL_UNSIGNED_BYTE, alienTexture.imageData);
 
 	// Alien
 	alien = glmReadOBJ("models/meleeAlien.obj");
@@ -551,9 +629,9 @@ int main(int argc, char** argv){
 		playerPosZ = -40;
 
 		// Alien Start Position
-		alienPosX = 45;
-		alienPosY = 12 * game.getHeight(45, -45);
-		alienPosZ = -45;
+		alienPosX = 60;
+		alienPosY = 12 * game.getHeight(60, -60);
+		alienPosZ = -60;
 
 		turretDirection = 270;
 
@@ -569,6 +647,12 @@ int main(int argc, char** argv){
 		glutEntryFunc(entry);
 
     init(argc, argv);
+
+		calculateAlienNextHop();
+    //Init();
+
+		// Calculate the alien Hop Modifier
+		alienHopModifier = alienMaxHopHeight/60;
 
     reshape(scrWidth, scrHeight);
 
