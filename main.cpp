@@ -289,6 +289,21 @@ void animateMissile()
 			missileLaunched = false;
 			Init();
 		}
+	
+		// Check if missile collides with enemy
+		if (
+			((alienPosX + alienRadius) > (missilePosX)) &&	// Check left side collision
+			((alienPosX - alienRadius) < (missilePosX)) && // Check right side collision
+			((alienPosZ - alienRadius) < (missilePosZ)) &&	// Check bottom side collision
+			((alienPosZ + alienRadius) > (missilePosZ)))		// Check top side collision
+		{
+			missileCollided = true;
+			missileLaunched = false;
+			alienPosX = rand() % 100 + 15;
+			alienPosZ = -(rand() % 100 + 15);	
+			calculateAlienNextHop();
+		}
+
 	}
 	else
 	{
