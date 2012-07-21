@@ -14,6 +14,8 @@ typedef struct particle {
   float mass;
 } particle;
 
+void setCoef(float value);
+
 void Display();
 
 void Idle();

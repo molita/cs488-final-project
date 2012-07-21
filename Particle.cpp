@@ -22,6 +22,11 @@ GLfloat colors[8][3] = {
   {1,165.0/255.0,0},
   {1,69.0/255.0,0}};
 
+void setCoef(float value)
+{
+	coef = value;
+}
+
 void Display()
 {
   int i;
@@ -80,15 +85,15 @@ void Collision(int n)
 
   for (i = 0; i < 3; i++)
   {
-    if (particles[n].position[i] >= 1.0)
+    if (particles[n].position[i] >= 0.2)
     {
       particles[n].velocity[i] = -coef*particles[n].velocity[i];
-      particles[n].position[i] = 1.0-coef*(particles[n].position[i] - 0.0);
+      particles[n].position[i] = 0.2-coef*(particles[n].position[i] - 0.0);
     }
-    if (particles[n].position[i] <= 1.0)
+    if (particles[n].position[i] <= 0.2)
     {
       particles[n].velocity[i] = -coef*particles[n].velocity[i];
-      particles[n].position[i] = -0.0001-coef*(particles[n].position[i] + 0.0);
+      particles[n].position[i] = -0.2-coef*(particles[n].position[i] + 0.0);
     }
   }
 }
