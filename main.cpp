@@ -106,8 +106,6 @@ GLMmodel* tankTurret;
 GLMmodel* tankBody;
 GLMmodel* alien;
 
-//Texture alienTexture;
-
 //--------------------------------------------------------------------
 //  State variables
 //--------------------------------------------------------------------
@@ -177,7 +175,6 @@ bool checkCollision(double sX, double sZ, double dX, double dZ, int type, double
 	{
 		// Additionally, check the Y value
 		// Cannot go on Mountains or Water
-		
 		if ((game.getHeight(tempX, tempZ)) > 0.1 &&
 				(game.getHeight(tempX, tempZ)) < 0.5)
 			return true;	
@@ -210,6 +207,26 @@ void calculateAlienNextHop()
 	alienZmove = hopDirection[2] / 60;	
 }
 
+void flashScreenRed()
+{
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	
+	glOrtho(0, scrWidth, scrHeight, 0, 0, 1);
+
+	glMatrixMode(GL_MODELVIEW);
+
+	glBegin(GL_QUADS);
+
+	glColor3f(1, 0, 0);
+	glVertex2f(0, 0);
+	glVertex2f(1, 0);
+	glVertex2f(1, 1);
+	glVertex2f(0, 1);
+	
+	glEnd();
+}
+
 void animateAlien()
 {
 		alienPosX = alienPosX + alienXmove;
@@ -233,7 +250,8 @@ void animateAlien()
 			((alienPosZ + alienRadius) > (playerPosZ - tankRadius)))		// Check top side collision
 		{
 			alienPosX = rand() % 100 + 15;
-			alienPosZ = -(rand() % 100 + 15);			
+			alienPosZ = -(rand() % 100 + 15);
+			flashScreenRed();			
 		}
 
 		calculateAlienNextHop();
@@ -268,9 +286,6 @@ void animateMissile()
 				missilePosX = playerPosX + 0.15;
 				missilePosY = playerPosY + 0.9;
 				missilePosZ = playerPosZ - 0;
-
-				//std::cerr << "RESTARTING";
-
 			}
 			
 		}
@@ -297,8 +312,8 @@ void animateMissile()
 			((alienPosZ - alienRadius) < (missilePosZ)) &&	// Check bottom side collision
 			((alienPosZ + alienRadius) > (missilePosZ)))		// Check top side collision
 		{
+			setCoef(1.1);
 			missileCollided = true;
-			missileLaunched = false;
 			alienPosX = rand() % 100 + 15;
 			alienPosZ = -(rand() % 100 + 15);	
 			calculateAlienNextHop();
@@ -385,8 +400,6 @@ void render(){
 		glPushMatrix();
 		glLoadIdentity();
 		glTranslated(alienPosX, alienPosY, alienPosZ);
-
-		//glBindTexture(GL_TEXTURE_2D, alienTexture.texID); 
 
 		glmDraw(alien, GLM_SMOOTH);
 
@@ -475,22 +488,6 @@ void mouse(int button, int state, int x, int y)
 				break;
 			
 		}
-/*
-		std::cerr << button;
-
-    if(button>0){	
-
-			if(state==GLUT_DOWN && buttons[button]==GLUT_UP)
-			    SM.PlaySound(SND_shoot);
-
-			if(state==GLUT_UP && buttons[button]==GLUT_DOWN)
-			    SM.StopSound(button);
-		    } else {
-			if(state==GLUT_DOWN){
-
-			} 
-    }
-*/
       buttons[button] = state;
 
       glutPostRedisplay();
@@ -615,7 +612,6 @@ void init(int argc, char** argv)
 
 	// Black Background
 	glClearColor(0, 0, 0, 0);	
-	//glClearColor((float)99/255, (float)122/255, (float)192/255, 0.0f);
 	
 	glClearDepth(1.0f);
 
