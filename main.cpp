@@ -57,16 +57,10 @@ float prev_x = 0;
 float prev_y = 0;
 int buttons[5] = {GLUT_UP, GLUT_UP, GLUT_UP, GLUT_UP, GLUT_UP};
 
-int SND_shoot;
-
-float xpos = 0, ypos = 0;
-
-int music_on = 0;
-
+int SND_explode;
 
 // Camera Variables
 double cameraAngleX;
-
 
 // Player Variables
 double playerPosX, playerPosY, playerPosZ;
@@ -79,6 +73,8 @@ double missilePosX, missilePosY, missilePosZ;
 double missileDirection;
 double missileXmove, missileZmove;
 bool missileLaunched, missileCollided, displayMissile;
+double powerUpTimer;
+double explosionTimer;
 
 // Alien variables
 double alienPosX, alienPosY, alienPosZ;
@@ -91,6 +87,7 @@ double alienAnimate3[3];
 
 double alienXmove, alienZmove;
 double animationCounter = 0;
+
 double hopDestination[3];		// This will be a certain number of units in the hop direction
 double hopDirection[3];
 double alienHopModifier;
@@ -204,7 +201,7 @@ void calculateAlienNextHop()
 	hopDestination[1] = game.getHeight(hopDestination[0], hopDestination[2]);
 	
 	alienXmove = hopDirection[0] / 60;
-	alienZmove = hopDirection[2] / 60;	
+	alienZmove = hopDirection[2] / 60;
 }
 
 void flashScreenRed()
@@ -212,7 +209,7 @@ void flashScreenRed()
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	
-	glOrtho(0, scrWidth, scrHeight, 0, 0, 1);
+	glOrtho(0, scrWidth, 0, scrHeight, 0, 1);
 
 	glMatrixMode(GL_MODELVIEW);
 
@@ -220,9 +217,9 @@ void flashScreenRed()
 
 	glColor3f(1, 0, 0);
 	glVertex2f(0, 0);
-	glVertex2f(1, 0);
-	glVertex2f(1, 1);
-	glVertex2f(0, 1);
+	glVertex2f(100, 0);
+	glVertex2f(100, 100);
+	glVertex2f(0, 100);
 	
 	glEnd();
 }
@@ -251,7 +248,6 @@ void animateAlien()
 		{
 			alienPosX = rand() % 100 + 15;
 			alienPosZ = -(rand() % 100 + 15);
-			flashScreenRed();			
 		}
 
 		calculateAlienNextHop();
@@ -262,69 +258,77 @@ void animateMissile()
 {
 	if (missileLaunched)
 	{
-		if (!missileCollided)
+		if (powerUpTimer > -1)
 		{
-			missilePosX = missilePosX + missileXmove;
-			missilePosZ = missilePosZ + missileZmove;
+			if (!missileCollided)
+			{
+				missilePosX = missilePosX + missileXmove;
+				missilePosZ = missilePosZ + missileZmove;
+			}
+			else
+			{
+				animationCounter++;
+				if (animationCounter > 100 && displayMissile)
+				{
+					displayMissile = false;
+				}
+				if (animationCounter > 200)
+				{
+					animationCounter = 0;
+					missileLaunched = false;
+					missileCollided = false;
+
+					Init();
+					setCoef(0.999);
+
+					missilePosX = playerPosX+(0.5*cos(tankDirection*(M_PI/180)));
+					missilePosY = playerPosY + 0.8;
+					missilePosZ = playerPosZ-(0.5*sin(tankDirection*(M_PI/180)));
+				}
+			
+			}
+			// Check for collision with terrain
+			if (missilePosY / 12 < game.getHeight(missilePosX, missilePosZ))
+			{
+				SM.PlaySound(SND_explode);
+
+				setCoef(1.1);
+				missileCollided = true;
+			}
+
+			// Check if missile goes out of world bounds
+			if (missilePosX < 0 || missilePosX > 127 ||
+					missilePosZ > 0 || missilePosZ < -127)
+			{
+				missileCollided = true;
+				missileLaunched = false;
+				Init();
+			}
+	
+			// Check if missile collides with enemy
+			if (
+				((alienPosX + alienRadius) > (missilePosX)) &&	// Check left side collision
+				((alienPosX - alienRadius) < (missilePosX)) && // Check right side collision
+				((alienPosZ - alienRadius) < (missilePosZ)) &&	// Check bottom side collision
+				((alienPosZ + alienRadius) > (missilePosZ)))		// Check top side collision
+			{
+				SM.PlaySound(SND_explode);
+
+				setCoef(1.1);
+				missileCollided = true;
+				alienPosX = rand() % 100 + 15;
+				alienPosZ = -(rand() % 100 + 15);	
+				calculateAlienNextHop();
+			}
 		}
 		else
-		{
-			animationCounter++;
-			if (animationCounter > 100 && displayMissile)
-			{
-				displayMissile = false;
-			}
-			if (animationCounter > 200)
-			{
-				animationCounter = 0;
-				missileLaunched = false;
-				missileCollided = false;
-
-				Init();
-				setCoef(0.999);
-
-				missilePosX = playerPosX + 0.15;
-				missilePosY = playerPosY + 0.9;
-				missilePosZ = playerPosZ - 0;
-			}
-			
-		}
-		// Check for collision with terrain
-		if (missilePosY / 12 < game.getHeight(missilePosX, missilePosZ))
-		{
-			setCoef(1.1);
-			missileCollided = true;
-		}
-
-		// Check if missile goes out of world bounds
-		if (missilePosX < 0 || missilePosX > 127 ||
-				missilePosZ > 0 || missilePosZ < -127)
-		{
-			missileCollided = true;
-			missileLaunched = false;
-			Init();
-		}
-	
-		// Check if missile collides with enemy
-		if (
-			((alienPosX + alienRadius) > (missilePosX)) &&	// Check left side collision
-			((alienPosX - alienRadius) < (missilePosX)) && // Check right side collision
-			((alienPosZ - alienRadius) < (missilePosZ)) &&	// Check bottom side collision
-			((alienPosZ + alienRadius) > (missilePosZ)))		// Check top side collision
-		{
-			setCoef(1.1);
-			missileCollided = true;
-			alienPosX = rand() % 100 + 15;
-			alienPosZ = -(rand() % 100 + 15);	
-			calculateAlienNextHop();
-		}
-
+			powerUpTimer++;
 	}
 	else
 	{
-		missilePosX = playerPosX + 0.15;
-		missilePosY = playerPosY + 0.9;
-		missilePosZ = playerPosZ - 0;
+		missilePosX = playerPosX+(0.5*cos(tankDirection*(M_PI/180)));
+		missilePosY = playerPosY + 0.8;
+		missilePosZ = playerPosZ-(0.5*sin(tankDirection*(M_PI/180)));
 	}
 }
 
@@ -343,7 +347,7 @@ void render(){
 		
 		// Position and scale it
 		// Center it around player and move it down a little
-		glTranslated(playerPosX - 64, -70, playerPosZ + 64);
+		glTranslated(playerPosX - 64, -60, playerPosZ + 64);
 		glScaled(128, 128, 128);
 		
 		glDisable(GL_LIGHTING);
@@ -387,14 +391,12 @@ void render(){
 
 		glPopMatrix();
 	
-		//if (displayMissile)
-		//{
-			glPushMatrix();
-			glLoadIdentity();
-			glTranslated(missilePosX, missilePosY, missilePosZ);		
-			Display();
-			Idle();
-		//}
+		glPushMatrix();
+		glLoadIdentity();
+		glTranslated(missilePosX, missilePosY, missilePosZ);		
+		Display();
+		Idle();
+
 		// Alien
 		glColor3f(1, 1, 1);
 		glPushMatrix();
@@ -434,11 +436,11 @@ void passiveMotion(int x, int y){
 	// Looking up
 	if (prev_y < cur_y && cameraAngleX < 20 && cameraAngleX > -5)
 		if (cameraAngleX > -4)
-			cameraAngleX = cameraAngleX - 0.5;// cameraRotateMotion(cur_y, prev_y);
+			cameraAngleX = cameraAngleX - 0.5;
 	// Looking Down
 	if (prev_y > cur_y && cameraAngleX > -5 && cameraAngleX < 20)
 		if (cameraAngleX < 19)
-			cameraAngleX = cameraAngleX + 0.5;//cameraRotateMotion(cur_y, prev_y);
+			cameraAngleX = cameraAngleX + 0.5;
 
 // For the tank turret
 	// Looking Right
@@ -465,11 +467,12 @@ void mouse(int button, int state, int x, int y)
 			case 0:
 				if (!missileLaunched)
 				{
-					SM.PlaySound(SND_shoot);
+					//SM.PlaySound(SND_explode);
 		
-					//setCoef(0.999);	
-					//Init();
-		
+					powerUpTimer = 0;
+
+					setCoef(0.99);
+
 					missileLaunched = true;
 					displayMissile = true;
 					missileCollided = false;
@@ -481,9 +484,9 @@ void mouse(int button, int state, int x, int y)
 					missileXmove = missileXmove / 2;
 					missileZmove = missileZmove / 2;
 
-					missilePosX = playerPosX + 0.5;
-					missilePosY = playerPosY + 1.1;
-					missilePosZ = playerPosZ - 0;
+					missilePosX = playerPosX+(0.5*cos(tankDirection*(M_PI/180)));
+					missilePosY = playerPosY + 0.8;
+					missilePosZ = playerPosZ-(0.5*sin(tankDirection*(M_PI/180)));
 				}
 				break;
 			
@@ -546,6 +549,9 @@ void display(void)
 
 	animateAlien();
 	animateMissile();
+
+	//SM.PlaySound(SND_engine);
+
 	// dump the whole buffer onto the screen should fix my bug
 	glFinish();
 	glutSwapBuffers();
@@ -576,8 +582,8 @@ void keyboard(unsigned char k, int x, int y)
 
 			if (checkCollision(playerPosX, playerPosZ, alienPosX, alienPosZ, 0, xMove, zMove))
 			{
-				playerPosX = playerPosX + xMove;
-				playerPosZ = playerPosZ + zMove;
+				playerPosX = playerPosX + (xMove*0.25);
+				playerPosZ = playerPosZ + (zMove*0.25);
 				playerPosY = (12 * game.getHeight(playerPosX, playerPosZ)) + 1;
 			}
 
@@ -643,7 +649,6 @@ void init(int argc, char** argv)
 	glmScale(alien, 0.05);
 	glmFacetNormals(alien);
 	glmVertexNormals(alien, 90.0, false);
-	//glmVertexNormals(alien, 180.0, false);
 
 	// Instantiate the game
 	game = Game();
@@ -693,8 +698,6 @@ void entry(int state)
 		// Right
 		if (prev_x > cur_x)
 			warpToX++;
-	
-		
 
 		glutWarpPointer(warpToX, warpToY);
 	}
@@ -711,7 +714,7 @@ int main(int argc, char** argv){
     scrWidth = 1200;
     scrHeight = 800;
     
-		SND_shoot = SM.LoadSound("Sounds/shoot.wav");
+		SND_explode = SM.LoadSound("Sounds/explode.wav");
 
     // intialize glut and main window
     glutInit(&argc, argv);
@@ -746,9 +749,9 @@ int main(int argc, char** argv){
 
 		calculateAlienNextHop();
 
-		missilePosX = playerPosX + 0.5;
-		missilePosY = playerPosY + 1.1;
-		missilePosZ = playerPosZ - 0;
+		missilePosX = playerPosX+(0.5*cos(tankDirection*(M_PI/180)));
+		missilePosY = playerPosY + 0.8;
+		missilePosZ = playerPosZ-(0.5*sin(tankDirection*(M_PI/180)));
 
     Init();
 
