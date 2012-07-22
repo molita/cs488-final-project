@@ -202,6 +202,13 @@ void calculateAlienNextHop()
 	
 	alienXmove = hopDirection[0] / 60;
 	alienZmove = hopDirection[2] / 60;
+
+	// Find the angle of alien for rotation
+
+	double scalarProduct = hopDirection[2] * -1;	// Since the other angle is (0, 0, -1), the Z-Axis
+	alienDirection = acos(scalarProduct);
+	alienDirection = alienDirection*(180/M_PI);
+
 }
 
 void flashScreenRed()
@@ -368,7 +375,8 @@ void render(){
 		glCallList(2);
 
 		// Body
-		glColor3f(1, 0, 0);
+		//glColor3f(1, 0, 0);
+		glColor3f((float)119/255, (float)136/255, (float)153/255);
 		glPushMatrix();
 		glLoadIdentity();
 		glTranslated(playerPosX, playerPosY, playerPosZ);
@@ -378,7 +386,8 @@ void render(){
 		glPopMatrix();
 		
 		// Turret
-		glColor3f(1, 0, 0);
+		//glColor3f(1, 0, 0);
+		glColor3f((float)119/255, (float)136/255, (float)153/255);
 		glPushMatrix();
 		glLoadIdentity();
 		glTranslated(
@@ -398,10 +407,15 @@ void render(){
 		Idle();
 
 		// Alien
-		glColor3f(1, 1, 1);
+		glColor3f((float)165/255, (float)42/255, (float)42/255);
 		glPushMatrix();
 		glLoadIdentity();
+		
 		glTranslated(alienPosX, alienPosY, alienPosZ);
+		if (playerPosX < alienPosX)
+			glRotated((alienDirection+180), 0, 1, 0);
+		else
+			glRotated(-(alienDirection+180), 0, 1, 0);
 
 		glmDraw(alien, GLM_SMOOTH);
 
